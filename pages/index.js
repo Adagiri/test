@@ -1,14 +1,31 @@
-import { useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import styles from '../styles/Home.module.css';
 import axios from 'axios';
 
-const API_URL = 'https://edufunda.herokuapp.com/api/v1/extras/file-uploads';
+import { io } from 'socket.io-client';
+
+const API_URL = 'http://localhost:9000';
 const AUTH_TOKEN =
   'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxZDVjNjNhYWRkNjNkMzVjNzhlM2QxNSIsInVzZXJUeXBlIjoiQ2xpZW50IiwidXNlcklkIjoiMjYwMzE3MTU2MzI2IiwiaWF0IjoxNjQxMzk5ODc2LCJleHAiOjE2NDM5OTE4NzZ9.LAcH6plzQRHXiYEAgTPSYm7rUKptbeXQzDSevBz6Qsc';
 
 export default function Home() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState('');
+  const [assignment, setAssignment] = useState({});
+
+  const socket = useRef();
+
+  useEffect(() => {
+    socket.current = io('ws://localhost:9000');
+    socket.current.emit('addUser', {
+      id: '61e93abcfd309276a0f39047',
+      userType: 'Client',
+    });
+  }, []);
+
+  useEffect(() => {
+    socket.current.emit('assignmentCreated', assignment);
+  }, [assignment]);
 
   const submit = async () => {
     if (!file) {
@@ -29,7 +46,7 @@ export default function Home() {
         },
         data: {
           contentType: file.type,
-          purpose: 'profile-photo',
+          purpose: 'assignment-request',
         },
       });
 
@@ -62,7 +79,7 @@ export default function Home() {
     <div className={styles.container}>
       <input type='file' onChange={(e) => setFile(e.target.files[0])} />
 
-      <div style={{margin: "30px",background: "cyan", padding: "10px"}}>
+      <div style={{ margin: '30px', background: 'cyan', padding: '10px' }}>
         {loading ? (
           <p>{loading}</p>
         ) : (
@@ -71,6 +88,18 @@ export default function Home() {
           </button>
         )}
       </div>
+
+      <button
+        onClick={() =>
+          setAssignment({
+            assignmentId: '0303929439',
+            requestType: 'Assignment',
+            subject: 'Mathematics',
+          })
+        }
+      >
+        Create Assignment
+      </button>
     </div>
   );
 }
